@@ -14,8 +14,6 @@ Prediksi harga rumah yang akurat membantu:
 Terutama pada peningkatan dasn perubahan harga yang secara dinamika berubah dari beberapa faktor. Model yang dibuat ingin menjadi baseline untuk menentukan harga rumah dari beberapa faktor yang terlihat.
 ## Business Understanding
 
-Bagian laporan ini mencakup:
-
 ### Problem Statements
 
 - Apa saja fitur-fitur demografis dan lingkungan yang paling memengaruhi harga rumah?
