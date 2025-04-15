@@ -25,10 +25,9 @@ Bagian laporan ini mencakup:
 
 ### Goals
 
-- Mengidentifikasi fitur-fitur penting yang memiliki korelasi tinggi terhadap harga rumah.
-
-- Membangun model machine learning untuk memprediksi harga rumah dengan akurasi tinggi.
-Semua poin di atas harus diuraikan dengan jelas. Anda bebas menuliskan berapa pernyataan masalah dan juga goals yang diinginkan.
+- Mengidentifikasi fitur-fitur penting yang memiliki korelasi tinggi terhadap harga rumah : Fitur-fitur pada dataset sering kali tidak dapat digunakan atau mengganggu model. Namun, untuk mengetahuinya, maka dibutuhkan feature selection. Untuk itu, model ingin memilih fitur-fitur terbaik sehingga memudahkan pengambilan data kedepannya.
+ 
+- Membangun model machine learning untuk memprediksi harga rumah : Model akan digunakan untuk memprediksi harga rumah yang dapat membantu buyer, real estate agents, perusahaan, dan pemerintah. Oleh karena itu, model perlu akurasi yang dapat diterima. Karena harga rumah memiliki rentang yang tidak terduga dan faktor-faktor lainnya, maka error dibawah 40% dapat diterima.
 
 ### Solution statements
 
@@ -71,37 +70,152 @@ Dataset memuat variabel-variabel :
 ## Visualisai Data
 
 Dalam tahap EDA, dibutuhkan visualisasi untuk mengetahui korelasi antara variabel, maka digunakan function pair plot dari library seaborn untuk melihar korelasi bivariate secara visual.
+![Pair Plot](pairplot_all.png)
 
+Karena kita ingin melihat lebih detail kolerasi dengan price maka kita lakukan pair plot dengan price.
+![Pair Plot Price](pairplot_price.png)
+
+Dari hasil pair plot, longitude dan latitude memiliki kolerasi yang unik terhadap price maka kita akan melakukan plotting. Kita akan menggunakan 3D plot yang menunjukan perubahan warna pada axis Y untuk price.
+![3D Graph](Longitude_latitude_price.png)
+
+Kita dapat melihat dari plotting tersebut bahwa latitude dan longitude memberikan kumpulan cluster untuk masing-masing rumah(lokasi). Namun, dibutuhkan satu variabel lagi untuk dapat menentukan harga dari setiap cluster tersebut. Karena dari hasil pairplot diatas menunjukan bahwa Bath, Bedroom, dan Living space sangat berkolerasi, kita gunakan living space sebagai feature tambahan.
+
+Kita akan menggunakan 3D plot yang menunjukan perubahan warna pada axis Y untuk living space yang tadinya digunakan untuk price.
+
+![3D Graph_plot](Longitude_latitude_price_living_space.png)
+
+Hasil menunjukan adanya pengaruh living space dan features sebelumnya, namun, perbedaan tidak terlihat karena terdapat outlier yang sangat sedikit sehingga warna dari feature living space yang terang tidak terlihat. Oleh karena itu, dibutuhkan data cleaning pada tahap data preparation.
 
 ## Data Preparation
-Pada bagian ini Anda menerapkan dan menyebutkan teknik data preparation yang dilakukan. Teknik yang digunakan pada notebook dan laporan harus berurutan.
 
-**Rubrik/Kriteria Tambahan (Opsional)**: 
-- Menjelaskan proses data preparation yang dilakukan
-- Menjelaskan alasan mengapa diperlukan tahapan data preparation tersebut.
+Pada data preparation, kita perlu melakukjan beberapa hal 
+- Memastikan bahwa tidak ada nilai 0 : Karena kita menggunakan rubik penilaian MAPE yang akan error jika ada nilai 0
+- Menghapus Nan values : Menghapus data yang hilang karena pada dataset, data yang hilang sedikit.
+- Menghapus outlier pada living space : Menghapus outlier pada living space akan berdampak pada visualisasi dan model regresi yang akan terganggu dengan banyak outler. Kita akan menghapus outlier dengan mencari nilai Quartil yang melewati batas.
+
+Graphic Longitude Latitude Living Space terhadap Price setelah data cleaning
+
+![Final Plot](Longitude_latitude_price_living_space.png)
 
 ## Modeling
-Tahapan ini membahas mengenai model machine learning yang digunakan untuk menyelesaikan permasalahan. Anda perlu menjelaskan tahapan dan parameter yang digunakan pada proses pemodelan.
 
-**Rubrik/Kriteria Tambahan (Opsional)**: 
-- Menjelaskan kelebihan dan kekurangan dari setiap algoritma yang digunakan.
-- Jika menggunakan satu algoritma pada solution statement, lakukan proses improvement terhadap model dengan hyperparameter tuning. **Jelaskan proses improvement yang dilakukan**.
-- Jika menggunakan dua atau lebih algoritma pada solution statement, maka pilih model terbaik sebagai solusi. **Jelaskan mengapa memilih model tersebut sebagai model terbaik**.
+### Linear Regression
+Pemodelan pertama kali menggunakan linear regression, metode regresi yang paling simpel. Namun, setelah melihat tidak adanya perubahan hasil saat penambahan feature, maka model ini tidak bisa mengerjakan kompleksitas yang dibutuhkan.
+
+Dengan melakukan evalusai MAPE dan MSE, model ini mendapatkan nilai 
+Train MAPE: 0.5475 (54.75%)
+Test MAPE: 0.5112 (51.12%)
+Training MSE: 81638204426.59
+Testing MSE: 107104461925.05
+
+Nilai tersebut tidak dapat digunakan sebagai model karena memberikan range error teralu besar.
+
+### XGBoost
+
+Algoritma XGBoost memberikan peningkatan hasil yang jauh lebih baik dibandingkan dengan Linear Regression. Kelebihan ini dapat diprediksi karena algoritma XGBoost adalah implementasi dari teknik Gradient Boosting, yaitu metode boosting di mana model dibangun secara berurutan, dan setiap model baru memperbaiki kesalahan dari model sebelumnya.
+
+Untuk Fitur ['Longitude', 'Latitude', 'Living Space'], mendapatkan hasil
+
+Train MAPE: 0.3382 (33.82%)
+Test MAPE: 0.3478 (34.78%)
+Training MSE: 16879227636.55
+Testing MSE: 49528296683.06
+
+dan setelah parameter tuning dengan fitur yang sama, terdapat pengurangan error pada test prediction.
+
+Train MAPE: 0.2444 (24.44%)
+Test MAPE: 0.3362 (33.62%)
+Training MSE: 8930146538.25
+Testing MSE: 51550105885.15
+
+Setelah mengetahui bahwa XGBoost dapat digunakan, feature-feature ditambahkan (Feature Selection) untuk meningkatkan kompleksitas serta hasil
+
+Untuk Fitur ['Longitude', 'Latitude', 'Living Space', 'Median Household Income','Zip Code Population', 'Zip Code Density'], mendapatkan hasil
+
+Train MAPE: 0.2093 (20.93%)
+Test MAPE: 0.3180 (31.80%)
+Training MSE: 6986084656.88
+Testing MSE: 48439769540.91
+
+Karena hasil yang terlihat overfitting, dilakukan hyper-parameter tuning dengan mengatur learning_rate=0.09 dan mendapatkan hasil
+
+Train MAPE: 0.2390 (23.90%)
+Test MAPE: 0.3174 (31.74%)
+Training MSE: 8564938701.46
+Testing MSE: 46849245619.81
+
+Setelah itu, digunakan algoritma optuna untuk mencari parameter yang terbaik. Setelah mengatur n_estimators, max_depth, learning_rate, subsample, dan colsample_bytree, model mendapatkan parameter dan hasil sebagai berikut
+
+Train MAPE: 0.3059 (30.59%)
+Test MAPE: 0.3379 (33.79%)
+Training MSE: 15247458765.28
+Testing MSE: 45596065980.25
+
+### Neural Network
+Dengan membentuk CNN, algoritma ini dapat digunakan untuk melakukan regresi. Namun, CNN cenderung lebih lama dan lebih sulit untuk dilakukan tuning ataupun pembentukan layer-layer yang optimal. Hasil yang didapatkan sebagai berikut
+
+Train MAPE: 0.3314 (33.14%)
+Test MAPE: 0.3622 (36.22%)
+Training MSE: 75680917015.08
+Testing MSE: 94353253191.27
+
+Namun, waktu komputasi untuk epoch yang banyak sangat lama. 
+
+Sebagai hasil, XGBoost dengan feature selection dan hyperparameter tuning memberikan hasil yang paling memuaskan dengan error 31,74% ditinjau dari MAPE.
 
 ## Evaluation
-Pada bagian ini anda perlu menyebutkan metrik evaluasi yang digunakan. Lalu anda perlu menjelaskan hasil proyek berdasarkan metrik evaluasi yang digunakan.
+Evaluasi menggunakan 2 metrik yaitu
 
-Sebagai contoh, Anda memiih kasus klasifikasi dan menggunakan metrik **akurasi, precision, recall, dan F1 score**. Jelaskan mengenai beberapa hal berikut:
-- Penjelasan mengenai metrik yang digunakan
-- Menjelaskan hasil proyek berdasarkan metrik evaluasi
+### MSE (Mean Squared Error)
 
-Ingatlah, metrik evaluasi yang digunakan harus sesuai dengan konteks data, problem statement, dan solusi yang diinginkan.
+MSE bekerja dengan menghitung selisih antara nilai aktual dan prediksi.
+Kemudian, menguadratkan selisih tersebut agar tidak negatif dan memberi penalti lebih besar untuk error besar.
+Setelah itu, mengambil rata-rata dari seluruh hasil kuadrat tersebut.
 
-**Rubrik/Kriteria Tambahan (Opsional)**: 
-- Menjelaskan formula metrik dan bagaimana metrik tersebut bekerja.
+MSE = (1/n) * Σ (y_i - y_hat_i)^2
 
-**---Ini adalah bagian akhir laporan---**
+Keterangan:
 
-_Catatan:_
-- _Anda dapat menambahkan gambar, kode, atau tabel ke dalam laporan jika diperlukan. Temukan caranya pada contoh dokumen markdown di situs editor [Dillinger](https://dillinger.io/), [Github Guides: Mastering markdown](https://guides.github.com/features/mastering-markdown/), atau sumber lain di internet. Semangat!_
-- Jika terdapat penjelasan yang harus menyertakan code snippet, tuliskan dengan sewajarnya. Tidak perlu menuliskan keseluruhan kode project, cukup bagian yang ingin dijelaskan saja.
+- n = jumlah data
+- y_i = nilai aktual ke-i
+- y_hat_i = nilai prediksi ke-i
+
+
+- MSE mengukur rata-rata kuadrat selisih antara nilai prediksi dan nilai sebenarnya.
+- Semakin kecil MSE, maka model semakin akurat.
+- MSE sangat sensitif terhadap outlier karena selisih dikuadratkan.
+
+### MAPE (Mean Absolute Percentage Error)
+
+MAPE bekerja dengan
+Untuk setiap data:
+- Hitung selisih absolut antara nilai aktual dan nilai prediksi.
+- Bagi selisih tersebut dengan nilai aktual untuk mendapatkan kesalahan dalam bentuk persentase.
+Kemudian, ambil rata-rata dari seluruh persentase kesalahan tersebut.
+
+
+MAPE = (1/n) * Σ |(y_i - y_hat_i) / y_i| * 100%
+
+Keterangan:
+- n = jumlah data
+
+- y_i = nilai aktual ke-i
+
+- y_hat_i = nilai prediksi ke-i
+
+- Σ = simbol penjumlahan dari i = 1 sampai n
+
+- MAPE mengukur kesalahan prediksi model dalam bentuk persentase dari nilai sebenarnya.
+- Semakin kecil MAPE, maka semakin baik model dalam memprediksi nilai yang mendekati data sebenarnya.
+- Kelemahan MAPE: Jika ada nilai y_i = 0, maka MAPE tidak bisa dihitung karena terjadi pembagian dengan nol. Solusi biasanya adalah menghapus data dengan target = 0 atau menggunakan metrik lain sebagai pendamping.
+- Karena berbentuk presentase, Mape digunakan agar pengguna model dapat dengan mudah meiihat error dibandingkan dengan MSE saja yang memiliki nilai yang besar karena memprediksi harga rumah.
+
+### Hasil akhir model
+
+Model dengan algoritma XGBoost yang utilisasi feature selection dan hyperparameter tuning mendapatkan hasil
+Train MAPE: 0.2390 (23.90%)
+Test MAPE: 0.3174 (31.74%)
+Training MSE: 8564938701.46
+Testing MSE: 46849245619.81
+
+Dari hasil tersebut, model cukup baik melaksanakan kerjanya untuk memprediksi dengan nilai error sekitar 30% dilihat dari metrik MAPE dan MSE digunakan sebagai pendamping karena memberikan gambaran besar tentang seberapa besar kesalahan absolut dalam unit harga. 
