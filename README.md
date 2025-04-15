@@ -63,7 +63,7 @@ Dataset memuat variabel-variabel :
 
 - Longitude: Garis bujur kode pos (Sumber: Simplemaps.com).
 
-## Visualisai Data
+## Visualisasi Data
 
 Dalam tahap EDA, dibutuhkan visualisasi untuk mengetahui korelasi antara variabel, maka digunakan function pair plot dari library seaborn untuk melihar korelasi bivariate secara visual.
 
